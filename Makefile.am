@@ -107,6 +107,7 @@ shellinaboxd_LDFLAGS = -static
 objcopyflags         = case "$(host_cpu)" in                                  \
                          i[0-9]86) echo '-O elf32-i386 -B i386';;             \
                          x86_64)   echo '-O elf64-x86-64 -B i386:x86-64';;    \
+                         mips*)    echo '-O elf32-tradbigmips -B mips:isa32';; \
                          arm*)     echo '-O elf32-littlearm -B arm';;         \
                        esac
 
@@ -217,23 +218,23 @@ clean-local:
                 debian/tmp
 
 .css.o:
-	@echo objcopy "$<" "$@"
-	@objcopy -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
+	@echo $(OBJCOPY) "$<" "$@"
+  @$(OBJCOPY) -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
 	  "$<" "$@"
 
 .gif.o:
-	@echo objcopy "$<" "$@"
-	@objcopy -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
+	@echo $(OBJCOPY) "$<" "$@"
+  @$(OBJCOPY) -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
 	  "$<" "$@"
 
 .html.o:
-	@echo objcopy "$<" "$@"
-	@objcopy -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
+	@echo $(OBJCOPY) "$<" "$@"
+  @$(OBJCOPY) -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
 	  "$<" "$@"
 
 .ico.o:
-	@echo objcopy "$<" "$@"
-	@objcopy -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
+	@echo $(OBJCOPY) "$<" "$@"
+  @$(OBJCOPY) -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
 	  "$<" "$@"
 
 shellinabox/shell_in_a_box.o: shellinabox/shell_in_a_box.js config.h
@@ -248,12 +249,12 @@ shellinabox/shell_in_a_box.o: shellinabox/shell_in_a_box.js config.h
 	     "$<" >"$@"
 
 .js.o:
-	@echo objcopy "$<" "$@"
-	@objcopy -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
+	@echo $(OBJCOPY) "$<" "$@"
+  @$(OBJCOPY) -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
 	  "$<" "$@"
 
 .wav.o:
-	@echo objcopy "$<" "$@"
-	@objcopy -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
+	@echo $(OBJCOPY) "$<" "$@"
+  @$(OBJCOPY) -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
 	  "$<" "$@"
 
