@@ -219,22 +219,22 @@ clean-local:
 
 .css.o:
 	@echo $(OBJCOPY) "$<" "$@"
-  @$(OBJCOPY) -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
+	@$(OBJCOPY) -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
 	  "$<" "$@"
 
 .gif.o:
 	@echo $(OBJCOPY) "$<" "$@"
-  @$(OBJCOPY) -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
+	@$(OBJCOPY) -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
 	  "$<" "$@"
 
 .html.o:
 	@echo $(OBJCOPY) "$<" "$@"
-  @$(OBJCOPY) -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
+	@$(OBJCOPY) -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
 	  "$<" "$@"
 
 .ico.o:
 	@echo $(OBJCOPY) "$<" "$@"
-  @$(OBJCOPY) -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
+	@$(OBJCOPY) -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
 	  "$<" "$@"
 
 shellinabox/shell_in_a_box.o: shellinabox/shell_in_a_box.js config.h
@@ -250,11 +250,11 @@ shellinabox/shell_in_a_box.o: shellinabox/shell_in_a_box.js config.h
 
 .js.o:
 	@echo $(OBJCOPY) "$<" "$@"
-  @$(OBJCOPY) -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
+	@$(OBJCOPY) -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
 	  "$<" "$@"
 
 .wav.o:
 	@echo $(OBJCOPY) "$<" "$@"
-  @$(OBJCOPY) -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
+	@$(OBJCOPY) -I binary `$(objcopyflags)` `echo "$<" | $(renamesymbols)`   \
 	  "$<" "$@"
 
