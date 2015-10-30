@@ -1011,7 +1011,7 @@ static pam_handle_t *internalLogin(struct Service *service, struct Utmp *utmp,
   (*environment)[numEnvVars++] = stringPrintf(NULL, "SHELL=%s", pw->pw_shell);
   check(
   (*environment)[numEnvVars++] = strdup(
-                              "PATH=/usr/bin:/usr/sbin:/bin:/sbin"
+                              "PATH=/usr/bin:/usr/sbin:/bin:/sbin"));
   (*environment)[numEnvVars++] = stringPrintf(NULL, "LOGNAME=%s",
                                               service->user);
   (*environment)[numEnvVars++] = stringPrintf(NULL, "USER=%s", service->user);
