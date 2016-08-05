@@ -371,6 +371,7 @@ shellinaboxd_LDFLAGS = -static
 objcopyflags = case "$(host_cpu)" in                                  \
                          i[0-9]86) echo '-O elf32-i386 -B i386';;             \
                          x86_64)   echo '-O elf64-x86-64 -B i386:x86-64';;    \
+                         mipsel*) echo '-O elf32-tradlittlemips -B mips:isa32';; \
                          mips*)    echo '-O elf32-tradbigmips -B mips:isa32';; \
                          arm*)     echo '-O elf32-littlearm -B arm';;         \
                        esac
