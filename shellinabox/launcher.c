@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ttydefaults.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -462,7 +463,7 @@ struct Utmp {
   int          pty;
   int          useLogin;
 #ifdef HAVE_UTMPX_H
-  struct utmpx utmpx;
+  struct utmpx utmpx_instance;
 #endif
 };
 
@@ -474,16 +475,16 @@ void initUtmp(struct Utmp *utmp, int useLogin, const char *ptyPath,
   utmp->pty                 = -1;
   utmp->useLogin            = useLogin;
 #ifdef HAVE_UTMPX_H
-  utmp->utmpx.ut_type       = useLogin ? LOGIN_PROCESS : USER_PROCESS;
+  utmp->utmpx_instance.ut_type       = useLogin ? LOGIN_PROCESS : USER_PROCESS;
   dcheck(!strncmp(ptyPath, "/dev/pts", 8));
-  strncat(&utmp->utmpx.ut_line[0], ptyPath + 5,   sizeof(utmp->utmpx.ut_line));
-  strncat(&utmp->utmpx.ut_id[0],   ptyPath + 8,   sizeof(utmp->utmpx.ut_id));
-  strncat(&utmp->utmpx.ut_user[0], "SHELLINABOX", sizeof(utmp->utmpx.ut_user));
-  strncat(&utmp->utmpx.ut_host[0], peerName,      sizeof(utmp->utmpx.ut_host));
+  strncat(&utmp->utmpx_instance.ut_line[0], ptyPath + 5,   sizeof(utmp->utmpx_instance.ut_line));
+  strncat(&utmp->utmpx_instance.ut_id[0],   ptyPath + 8,   sizeof(utmp->utmpx_instance.ut_id));
+  strncat(&utmp->utmpx_instance.ut_user[0], "SHELLINABOX", sizeof(utmp->utmpx_instance.ut_user));
+  strncat(&utmp->utmpx_instance.ut_host[0], peerName,      sizeof(utmp->utmpx_instance.ut_host));
   struct timeval tv;
   check(!gettimeofday(&tv, NULL));
-  utmp->utmpx.ut_tv.tv_sec  = tv.tv_sec;
-  utmp->utmpx.ut_tv.tv_usec = tv.tv_usec;
+  utmp->utmpx_instance.ut_tv.tv_sec  = tv.tv_sec;
+  utmp->utmpx_instance.ut_tv.tv_usec = tv.tv_usec;
 #endif
 }
 
@@ -499,13 +500,13 @@ void destroyUtmp(struct Utmp *utmp) {
   if (utmp) {
     if (utmp->pty >= 0) {
 #ifdef HAVE_UTMPX_H
-      utmp->utmpx.ut_type = DEAD_PROCESS;
-      memset(&utmp->utmpx.ut_user, 0, sizeof(utmp->utmpx.ut_user));
-      memset(&utmp->utmpx.ut_host, 0, sizeof(utmp->utmpx.ut_host));
+      utmp->utmpx_instance.ut_type = DEAD_PROCESS;
+      memset(&utmp->utmpx_instance.ut_user, 0, sizeof(utmp->utmpx_instance.ut_user));
+      memset(&utmp->utmpx_instance.ut_host, 0, sizeof(utmp->utmpx_instance.ut_host));
       struct timeval tv;
       check(!gettimeofday(&tv, NULL));
-      utmp->utmpx.ut_tv.tv_sec  = tv.tv_sec;
-      utmp->utmpx.ut_tv.tv_usec = tv.tv_usec;
+      utmp->utmpx_instance.ut_tv.tv_sec  = tv.tv_sec;
+      utmp->utmpx_instance.ut_tv.tv_usec = tv.tv_usec;
 
       // Temporarily regain privileges to update the utmp database
       uid_t r_uid, e_uid, s_uid;
@@ -516,10 +517,10 @@ void destroyUtmp(struct Utmp *utmp) {
       setresgid(0, 0, 0);
 
       setutxent();
-      pututxline(&utmp->utmpx);
+      pututxline(&utmp->utmpx_instance);
       endutxent();
       if (!utmp->useLogin) {
-        updwtmpx("/var/log/wtmp", &utmp->utmpx);
+        updwtmpx("/var/log/wtmp", &utmp->utmpx_instance);
       }
       
       // Switch back to the lower privileges
@@ -684,7 +685,7 @@ static int forkPty(int *pty, int useLogin, struct Utmp **utmp,
     pid                     = getpid();
     snprintf((char *)&(*utmp)->pid[0], sizeof((*utmp)->pid), "%d", pid);
 #ifdef HAVE_UTMPX_H
-    (*utmp)->utmpx.ut_pid   = pid;
+    (*utmp)->utmpx_instance.ut_pid   = pid;
 #endif
     (*utmp)->pty            = slave;
 
@@ -714,7 +715,7 @@ static int forkPty(int *pty, int useLogin, struct Utmp **utmp,
   } else {
     snprintf((char *)&(*utmp)->pid[0], sizeof((*utmp)->pid), "%d", pid);
 #ifdef HAVE_UTMPX_H
-    (*utmp)->utmpx.ut_pid   = pid;
+    (*utmp)->utmpx_instance.ut_pid   = pid;
 #endif
     (*utmp)->pty            = *pty;
     fcntl(*pty, F_SETFL, O_NONBLOCK|O_RDWR);
@@ -961,7 +962,7 @@ static pam_handle_t *internalLogin(struct Service *service, struct Utmp *utmp,
 #if defined(HAVE_SECURITY_PAM_APPL_H)
     if (pam) {
 #ifdef HAVE_UTMPX_H
-      check(pam_set_item(pam, PAM_TTY, (const void **)utmp->utmpx.ut_line) ==
+      check(pam_set_item(pam, PAM_TTY, (const void **)utmp->utmpx_instance.ut_line) ==
             PAM_SUCCESS);
 #endif
     }
@@ -1021,13 +1022,13 @@ static pam_handle_t *internalLogin(struct Service *service, struct Utmp *utmp,
   // Update utmp/wtmp entries
 #ifdef HAVE_UTMPX_H
   if (service->authUser != 2 /* SSH */) {
-    memset(&utmp->utmpx.ut_user, 0, sizeof(utmp->utmpx.ut_user));
-    strncat(&utmp->utmpx.ut_user[0], service->user,
-            sizeof(utmp->utmpx.ut_user));
+    memset(&utmp->utmpx_instance.ut_user, 0, sizeof(utmp->utmpx_instance.ut_user));
+    strncat(&utmp->utmpx_instance.ut_user[0], service->user,
+            sizeof(utmp->utmpx_instance.ut_user));
     setutxent();
-    pututxline(&utmp->utmpx);
+    pututxline(&utmp->utmpx_instance);
     endutxent();
-    updwtmpx("/var/log/wtmp", &utmp->utmpx);
+    updwtmpx("/var/log/wtmp", &utmp->utmpx_instance);
   }
 #endif
 
@@ -1301,17 +1302,17 @@ static void childProcess(struct Service *service, int width, int height,
   setresgid(0, 0, 0);
 #ifdef HAVE_UTMPX_H
   setutxent();
-  struct utmpx utmpx            = utmp->utmpx;
+  struct utmpx utmpx_instance            = utmp->utmpx_instance;
   if (service->useLogin || service->authUser) {
-    utmpx.ut_type               = LOGIN_PROCESS;
-    memset(utmpx.ut_host, 0, sizeof(utmpx.ut_host));
+    utmpx_instance.ut_type               = LOGIN_PROCESS;
+    memset(utmpx_instance.ut_host, 0, sizeof(utmpx_instance.ut_host));
   }
-  pututxline(&utmpx);
+  pututxline(&utmpx_instance);
   endutxent();
   if (!utmp->useLogin) {
-    memset(&utmpx.ut_user, 0, sizeof(utmpx.ut_user));
-    strncat(&utmpx.ut_user[0], "LOGIN", sizeof(utmpx.ut_user));
-    updwtmpx("/var/log/wtmp", &utmpx);
+    memset(&utmpx_instance.ut_user, 0, sizeof(utmpx_instance.ut_user));
+    strncat(&utmpx_instance.ut_user[0], "LOGIN", sizeof(utmpx_instance.ut_user));
+    updwtmpx("/var/log/wtmp", &utmpx_instance);
   }
 #endif
 
